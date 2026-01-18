@@ -3614,13 +3614,6 @@ static bool init_psi_monitors() {
 }
 
 static bool init_mp_common(enum vmpressure_level level) {
-    // The implementation of this function relies on memcg statistics that are only available in the
-    // v1 cgroup hierarchy.
-    if (memcg_version() != MemcgVersion::kV1) {
-        ALOGE("%s: global monitoring is only available for the v1 cgroup hierarchy", __func__);
-        return false;
-    }
-
     int mpfd;
     int evfd;
     int evctlfd;
@@ -3630,16 +3623,18 @@ static bool init_mp_common(enum vmpressure_level level) {
     int level_idx = (int)level;
     const char *levelstr = level_name[level_idx];
 
-    /* gid containing AID_SYSTEM required */
-    mpfd = open(GetCgroupAttributePath("MemPressureLevel").c_str(), O_RDONLY | O_CLOEXEC);
+    std::string path = "/sys/fs/cgroup/memory/memory.pressure_level";
+    std::string path_ctl = "/sys/fs/cgroup/memory/cgroup.event_control";
+    
+    mpfd = open(path.c_str(), O_RDONLY | O_CLOEXEC);
     if (mpfd < 0) {
-        ALOGI("No kernel memory.pressure_level support (errno=%d)", errno);
+        ALOGI("No kernel memory.pressure_level support at %s (errno=%d)", path.c_str(), errno);
         goto err_open_mpfd;
     }
 
-    evctlfd = open(GetCgroupAttributePath("MemCgroupEventControl").c_str(), O_WRONLY | O_CLOEXEC);
+    evctlfd = open(path_ctl.c_str(), O_WRONLY | O_CLOEXEC);
     if (evctlfd < 0) {
-        ALOGI("No kernel memory cgroup event control (errno=%d)", errno);
+        ALOGI("No kernel cgroup.event_control support at %s (errno=%d)", path_ctl.c_str(), errno);
         goto err_open_evctlfd;
     }
 

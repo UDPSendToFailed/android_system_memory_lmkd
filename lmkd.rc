@@ -1,3 +1,25 @@
+on init
+
+    mkdir /sys/fs/cgroup/memory 0750 root system
+    mount cgroup none /sys/fs/cgroup/memory memory
+
+    mkdir /sys/fs/cgroup/cpu 0750 root system
+    mount cgroup none /sys/fs/cgroup/cpu cpu
+
+    chown root system /sys/fs/cgroup/memory/cgroup.event_control
+    chmod 0664 /sys/fs/cgroup/memory/cgroup.event_control
+
+    chown root system /sys/fs/cgroup/memory/memory.pressure_level
+    chmod 0664 /sys/fs/cgroup/memory/memory.pressure_level
+
+    chown root system /sys/fs/cgroup/memory/memory.swappiness
+    chmod 0664 /sys/fs/cgroup/memory/memory.swappiness
+
+    chown root system /sys/fs/cgroup/cpu/tasks
+    chmod 0664 /sys/fs/cgroup/cpu/tasks
+
+    start lmkd
+
 service lmkd /system/bin/lmkd
     class core
     user lmkd
